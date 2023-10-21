@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_flutter_app_node_js_mongodb/config/api_services.dart';
 import 'package:todo_flutter_app_node_js_mongodb/ui/home.dart';
 import 'package:todo_flutter_app_node_js_mongodb/ui/login/login_page.dart';
@@ -40,12 +41,16 @@ class AuthProvider extends ChangeNotifier {
           apiUrl: 'registration', body: jsonEncode(body), header: header);
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
-        emailController.clear();
-        passwordController.clear();
+        if (data["status"]) {
+          emailController.clear();
+          passwordController.clear();
 
-        debugPrint("Success ${data["status"]}");
-        ToastMsg.successToast(msg: data["msg"]);
-        Helper.goTo(context, const LoginPage());
+          debugPrint("Success ${data["status"]}");
+          ToastMsg.successToast(msg: data["msg"]);
+          Helper.goTo(context, const LoginPage());
+        } else {
+          ToastMsg.errorToast(msg: data["msg"]);
+        }
       }
     } catch (e) {
       debugPrint("registerUser $e");
@@ -65,8 +70,10 @@ class AuthProvider extends ChangeNotifier {
       var response = await apiService.postData(
           apiUrl: 'login', body: jsonEncode(body), header: header);
       if (response.statusCode == 200) {
+        final SharedPreferences pref = await SharedPreferences.getInstance();
         var data = jsonDecode(response.body);
         if (data["status"]) {
+          pref.setString("token", data["token"]);
           emailController.clear();
           passwordController.clear();
 
