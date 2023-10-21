@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -14,7 +15,6 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-
   Map<String, dynamic> loginUserData = {};
 
   ApiService apiService = ApiService();
@@ -89,5 +89,12 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("login $e");
     }
+  }
+
+  Future<void> getLoginInfo() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    var token = pref.getString("token");
+    loginUserData = JwtDecoder.decode(token!);
+    notifyListeners();
   }
 }
