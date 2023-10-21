@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_flutter_app_node_js_mongodb/config/api_services.dart';
 import 'package:todo_flutter_app_node_js_mongodb/ui/home.dart';
@@ -13,6 +14,8 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
+  Map<String, dynamic> loginUserData = {};
 
   ApiService apiService = ApiService();
   final header = {"Content-Type": "application/json"};
@@ -44,7 +47,6 @@ class AuthProvider extends ChangeNotifier {
         if (data["status"]) {
           emailController.clear();
           passwordController.clear();
-
           debugPrint("Success ${data["status"]}");
           ToastMsg.successToast(msg: data["msg"]);
           Helper.goTo(context, const LoginPage());
@@ -76,7 +78,7 @@ class AuthProvider extends ChangeNotifier {
           pref.setString("token", data["token"]);
           emailController.clear();
           passwordController.clear();
-
+          loginUserData = JwtDecoder.decode(data["token"]);
           debugPrint("Success ${data["status"]}");
           ToastMsg.successToast(msg: data["msg"]);
           Helper.goTo(context, const MyHomePage());
