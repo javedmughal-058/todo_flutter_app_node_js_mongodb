@@ -3,8 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo_flutter_app_node_js_mongodb/config/api_services.dart';
+import 'package:todo_flutter_app_node_js_mongodb/providers/user_provider.dart';
 import 'package:todo_flutter_app_node_js_mongodb/ui/home.dart';
 import 'package:todo_flutter_app_node_js_mongodb/ui/login/login_page.dart';
 import 'package:todo_flutter_app_node_js_mongodb/utils/helper.dart';
@@ -24,7 +26,8 @@ class AuthProvider extends ChangeNotifier {
     if (emailController.text.isEmpty && passwordController.text.isEmpty) {
       isValueNotAvailable = true;
       notifyListeners();
-    } else {
+    }
+    else {
       isValueNotAvailable = false;
       notifyListeners();
     }
@@ -79,10 +82,11 @@ class AuthProvider extends ChangeNotifier {
           emailController.clear();
           passwordController.clear();
           loginUserData = JwtDecoder.decode(data["token"]);
-          debugPrint("Success ${data["status"]}");
+          Provider.of<UserProvider>(context, listen: false).getTasks(context, userId: loginUserData["_id"]);
           ToastMsg.successToast(msg: data["msg"]);
-          Helper.goTo(context, const MyHomePage());
-        } else {
+          Helper.goTo(context, MyHomePage(token: data["token"]));
+        }
+        else {
           ToastMsg.errorToast(msg: data["msg"]);
         }
       }
@@ -95,6 +99,7 @@ class AuthProvider extends ChangeNotifier {
     final SharedPreferences pref = await SharedPreferences.getInstance();
     var token = pref.getString("token");
     loginUserData = JwtDecoder.decode(token!);
+
     notifyListeners();
   }
 }
