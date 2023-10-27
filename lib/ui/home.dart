@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_flutter_app_node_js_mongodb/model/user_todo_model.dart';
 import 'package:todo_flutter_app_node_js_mongodb/providers/auth_provider.dart';
 import 'package:todo_flutter_app_node_js_mongodb/providers/user_provider.dart';
 import 'package:todo_flutter_app_node_js_mongodb/ui/login/login_page.dart';
@@ -23,8 +24,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
     userProvider = Provider.of<UserProvider>(context, listen: false);
     authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.loginUserData = JwtDecoder.decode(widget.token);
@@ -62,7 +63,19 @@ class _MyHomePageState extends State<MyHomePage> {
                      IconSlideAction(
                        color: Colors.green,
                        icon: Icons.edit,
-                       onTap: () {},
+                       onTap: (){
+                         userProvider.checkIsUpdating(true);
+                         showModalBottomSheet(
+                           shape: const RoundedRectangleBorder(
+                             borderRadius: BorderRadius.only(
+                                 topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                           ),
+                           context: context,
+                           builder: (BuildContext context) {
+                             return ModelBottomSheet(data: data);
+                           },
+                         );
+                       },
                      ),
 
                    ],
@@ -92,16 +105,19 @@ class _MyHomePageState extends State<MyHomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showModalBottomSheet(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-          ),
-          context: context,
-          builder: (BuildContext context) {
-            return const ModelBottomSheet();
-          },
-        ),
+        onPressed: (){
+          userProvider.checkIsUpdating(false);
+          showModalBottomSheet(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+            ),
+            context: context,
+            builder: (BuildContext context) {
+              return const ModelBottomSheet();
+            },
+          );
+        },
         tooltip: 'Add',
         child: const Icon(Icons.add),
       ),
@@ -110,7 +126,8 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class ModelBottomSheet extends StatefulWidget {
-  const ModelBottomSheet({Key? key}) : super(key: key);
+  final Todo? data;
+  const ModelBottomSheet({Key? key, this.data}) : super(key: key);
 
   @override
   _ModelBottomSheetState createState() => _ModelBottomSheetState();
@@ -119,12 +136,23 @@ class ModelBottomSheet extends StatefulWidget {
 class _ModelBottomSheetState extends State<ModelBottomSheet> {
   late TextEditingController titleController;
   late TextEditingController descriptionController;
+  late final UserProvider userProvider;
+  late final AuthProvider authProvider;
 
   @override
   void initState() {
     super.initState();
+    userProvider = Provider.of<UserProvider>(context, listen: false);
+    authProvider = Provider.of<AuthProvider>(context, listen: false);
+
     titleController = TextEditingController();
     descriptionController = TextEditingController();
+
+    if(userProvider.isUpdating){
+      debugPrint("updatingggggg");
+      titleController.text = widget.data!.title ?? "";
+      descriptionController.text = widget.data!.description ?? "";
+    }
   }
 
   @override
@@ -137,9 +165,6 @@ class _ModelBottomSheetState extends State<ModelBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final userProvider = Provider.of<UserProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
@@ -215,21 +240,35 @@ class _ModelBottomSheetState extends State<ModelBottomSheet> {
               onTap: () async {
                 debugPrint("id ${authProvider.loginUserData["_id"]}");
                 var userId = authProvider.loginUserData["_id"];
-                EasyLoading.show(status: 'Saving...');
-                await userProvider.saveTask(context,
-                  userId: userId,
-                  title: titleController.text.trim(),
-                  description: descriptionController.text.trim()).then((_){
+                EasyLoading.show(status: userProvider.isUpdating ? 'Updating...' : 'Saving...');
+                if(userProvider.isUpdating){
+                  await userProvider.updateTask(context,taskId: widget.data!.id!,
+                      title: titleController.text.trim(),
+                      description: descriptionController.text.trim()).then((_){
                     userProvider.getTasks(context, userId: userId);
                     EasyLoading.dismiss();
                     Navigator.of(context).pop();
                     titleController.clear();
                     descriptionController.clear();
-                });
+                  });
+                }
+                else{
+                  await userProvider.saveTask(context,
+                      userId: userId,
+                      title: titleController.text.trim(),
+                      description: descriptionController.text.trim()).then((_){
+                    userProvider.getTasks(context, userId: userId);
+                    EasyLoading.dismiss();
+                    Navigator.of(context).pop();
+                    titleController.clear();
+                    descriptionController.clear();
+                  });
+                }
+
 
               },
               child: CustomButton(
-                title: 'Save',
+                title: userProvider.isUpdating ? 'Update ': 'Save',
                 size: size,
               ),
             ),

@@ -10,6 +10,17 @@ class UserProvider extends ChangeNotifier {
   final header = {"Content-Type": "application/json"};
   bool isLoading = false;
   var userTodoList = <Todo>[];
+  var isUpdating = false;
+
+  void checkIsUpdating(bool value){
+    if(value){
+      isUpdating = true;
+    }
+    else{
+      isUpdating = false;
+    }
+    notifyListeners();
+  }
 
   Future<void> saveTask(context, {required String userId,required String title, required String description}) async {
     debugPrint("Calling Save Task");
@@ -32,7 +43,7 @@ class UserProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint("registerUser $e");
+      debugPrint("saveTask $e");
     }
   }
 
@@ -60,7 +71,7 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       isLoading = false;
-      debugPrint("registerUser $e");
+      debugPrint("getTasks $e");
     }
   }
 
@@ -87,9 +98,33 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       isLoading = false;
-      debugPrint("registerUser $e");
+      debugPrint("deleteTasks $e");
     }
   }
 
+  Future<void> updateTask(context, {required String taskId,required String title, required String description}) async {
+    debugPrint("Calling Update Task");
+
+    try {
+      var body = {
+        "id": taskId,
+        "title": title,
+        "description": description
+      };
+      var response = await apiService.postData(
+          apiUrl: 'updateTodo', body: jsonEncode(body), header: header);
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        if (data["status"]) {
+          debugPrint("Success ${data["status"]}");
+          ToastMsg.successToast(msg: data["msg"]);
+        } else {
+          ToastMsg.errorToast(msg: data["msg"]);
+        }
+      }
+    } catch (e) {
+      debugPrint("updateTask $e");
+    }
+  }
 
 }
