@@ -1,16 +1,8 @@
 # todo_flutter_app_node_js_mongodb
 
-A new Flutter project.
+Successfully executed CRUD operations within a Flutter project, connected to a Node.js backend with MongoDB.
 
-## Getting Started
+https://github.com/javedmughal-058/todo_flutter_app_node_js_mongodb/assets/91019922/c18f5ec1-0d87-486c-bde9-9aa9a70c8ee8
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
